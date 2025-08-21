@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Vanh đẹp trai</title>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      overflow: hidden; /* tránh scrollbar */
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background: #ffffff;
+      color: #111111;
+    }
+    .center-text {
+      text-align: center;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      line-height: 1.1;
+      font-size: clamp(28px, 8vw, 120px);
+      margin: 40px 0;
+    }
+    .donate-container {
+      text-align: center;
+      margin: 20px 0;
+    }
+    .donate-container img {
+      width: 150px;
+      height: 150px;
+      margin-bottom: 10px;
+    }
+    .donate-container p {
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+    }
+    #main-content {
+      display: none; /* Ẩn nội dung trước khi nhập tên */
+      position: relative;
+      z-index: 1;
+    }
+    #name-form {
+      text-align: center;
+      z-index: 1;
+    }
+    input, select, button {
+      padding: 10px;
+      font-size: 16px;
+      margin: 5px;
+    }
+    /* Canvas vẽ stickman ở dưới mọi nội dung */
+    #stickmanCanvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+    }
+  </style>
+</head>
+<body>
+  <!-- Form nhập tên và giới tính -->
+  <div id="name-form">
+    <label for="username">Bạn tên là gì:</label><br>
+    <input type="text" id="username" placeholder="Nhập tên bạn"><br>
+    
+    <label for="gender">Giới tính của bạn:</label><br>
+    <select id="gender">
+      <option value="">Khác</option>
+      <option value="Nam">Nam</option>
+      <option value="Nữ">Nữ</option>
+    </select><br>
+    
+    <button onclick="showContent()">Gửi</button>
+  </div>
+
+  <!-- Nội dung chính, ẩn ban đầu -->
+  <div id="main-content">
+    <div class="donate-container">
+      <img src="qrvanh.jpg" alt="Donate QR trên">
+      <p>Hãy Donate cho HVA</p>
+    </div>
+
+    <div class="center-text" id="main-text"></div>
+
+    <div class="donate-container">
+      <img src="qrvanh.jpg" alt="Donate QR dưới">
+      <p>Hãy Donate cho HVA</p>
+    </div>
+  </div>
+
+  <!-- Canvas nền -->
+  <canvas id="stickmanCanvas"></canvas>
+
+  <script>
+    function showContent() {
+      const name = document.getElementById('username').value.trim();
+      const gender = document.getElementById('gender').value;
+
+      if (name === "") {
+        alert("Bạn chưa nhập tên!");
+        return;
+      }
+
+      let middleText;
+      if (gender === "Nam") {
+        middleText = `${name} đẹp trai`;
+      } else if (gender === "Nữ") {
+        middleText = `${name} xinh gái`;
+      } else {
+        middleText = `${name}`;
+      }
+
+      document.getElementById('main-text').innerText = middleText;
+      document.getElementById('name-form').style.display = "none";
+      document.getElementById('main-content').style.display = "block";
+    }
+
+    // ===== Stickman =====
+    const canvas = document.getElementById("stickmanCanvas");
+    const ctx = canvas.getContext("2d");
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
+
+    // --- Geometry constants (dễ chỉnh) ---
+    const HEAD_R = 40;        // bán kính đầu (40 -> đường kính 80)
+    const NECK_GAP = 10;      // khoảng giữa đáy đầu và điểm bắt đầu thân
+    const BODY_TOP = -NECK_GAP; // y của "cổ" / đầu trên của thân (relative)
+    const BODY_LEN = 90;      // chiều dài thân
+    const STEP_FREQ = 10;     // tần số bước
+
+    class Stickman {
+      constructor() {
+        this.x = canvas.width * 0.5;
+        this.y = canvas.height * 0.5;
+        this.vx = 2.2;
+        this.vy = 1.8;
+        this.state = "walk"; // "walk" | "rest"
+        this.t = 0;          // đếm khung tổng
+        this.phase = 0;      // đếm trong state hiện tại
+        this.walkDur = this.rand(360, 720); // 6–12s @60fps
+        this.restDur = this.rand(90, 150);  // 1.5–2.5s
+        this.restSide = Math.random() < 0.5 ? 1 : -1; // nằm trái/phải
+      }
+
+      rand(a, b) { return Math.floor(a + Math.random()*(b - a)); }
+
+      update() {
+        this.t++;
+        this.phase++;
+
+        if (this.state === "walk") {
+          // di chuyển
+          this.x += this.vx;
+          this.y += this.vy;
+
+          // bật tường (chừa viền theo kích thước người)
+          const padX = Math.max(60, HEAD_R + 20), padY = Math.max(120, HEAD_R + 40);
+          if (this.x < padX || this.x > canvas.width - padX) this.vx *= -1;
+          if (this.y < padY || this.y > canvas.height - padY) this.vy *= -1;
+
+          // hết thời gian đi -> nghỉ
+          if (this.phase >= this.walkDur) {
+            this.state = "rest";
+            this.phase = 0;
+            this.restDur = this.rand(90, 150);
+            this.restSide = Math.random() < 0.5 ? 1 : -1;
+          }
+        } else if (this.state === "rest") {
+          // KHÔNG di chuyển khi nghỉ
+          if (this.phase >= this.restDur) {
+            this.state = "walk";
+            this.phase = 0;
+            this.walkDur = this.rand(360, 720);
+
+            // thêm chút đổi hướng ngẫu nhiên để tự nhiên hơn
+            const jitter = 0.4;
+            this.vx += (Math.random()*2 - 1) * jitter;
+            this.vy += (Math.random()*2 - 1) * jitter;
+
+            // giới hạn tốc độ
+            const speed = Math.hypot(this.vx, this.vy);
+            const maxS = 3.2, minS = 1.2;
+            if (speed > maxS) {
+              this.vx = this.vx / speed * maxS;
+              this.vy = this.vy / speed * maxS;
+            } else if (speed < minS) {
+              const s = minS / (speed || 1);
+              this.vx *= s;
+              this.vy *= s;
+            }
+          }
+        }
+      }
+
+      draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+
+        if (this.state === "rest") {
+          // Vẽ tư thế nằm ngang đầy đủ (đầu-thân-tay-chân)
+          // xoay 90 độ trái/phải
+          ctx.rotate(this.restSide * Math.PI / 2);
+
+          // HEAD CENTER Y dựa trên BODY_TOP & HEAD_R
+          const headCenterY = BODY_TOP - HEAD_R;
+
+          // Đầu
+          ctx.beginPath();
+          ctx.arc(0, headCenterY, HEAD_R, 0, Math.PI*2);
+          ctx.fillStyle = "#FFE8A3";
+          ctx.fill();
+          ctx.stroke();
+
+          // Thân (từ cổ BODY_TOP xuống BODY_TOP + BODY_LEN)
+          ctx.beginPath();
+          ctx.moveTo(0, BODY_TOP);
+          ctx.lineTo(0, BODY_TOP + BODY_LEN);
+          ctx.stroke();
+
+          // Tay (dang thoải mái)
+          ctx.beginPath();
+          ctx.moveTo(0, BODY_TOP + 15);
+          ctx.lineTo(35, BODY_TOP + 45);
+          ctx.moveTo(0, BODY_TOP + 15);
+          ctx.lineTo(-35, BODY_TOP + 45);
+          ctx.stroke();
+
+          // Chân (hơi co duỗi)
+          ctx.beginPath();
+          ctx.moveTo(0, BODY_TOP + BODY_LEN);
+          ctx.lineTo(28, BODY_TOP + BODY_LEN + 40);
+          ctx.moveTo(0, BODY_TOP + BODY_LEN);
+          ctx.lineTo(-28, BODY_TOP + BODY_LEN + 40);
+          ctx.stroke();
+
+        } else {
+          // Vẽ tư thế đi bộ (đứng)
+          const headCenterY = BODY_TOP - HEAD_R; // luôn cùng công thức
+
+          // Đầu
+          ctx.beginPath();
+          ctx.arc(0, headCenterY, HEAD_R, 0, Math.PI*2);
+          ctx.fillStyle = "#CDEAFE";
+          ctx.fill();
+          ctx.stroke();
+
+          // Thân
+          ctx.beginPath();
+          ctx.moveTo(0, BODY_TOP);
+          ctx.lineTo(0, BODY_TOP + BODY_LEN);
+          ctx.stroke();
+
+          // Vai / tay (từ vai)
+          const shoulderY = BODY_TOP + 20;
+          ctx.beginPath();
+          ctx.moveTo(0, shoulderY);
+          ctx.lineTo(-35, shoulderY + 30);
+          ctx.moveTo(0, shoulderY);
+          ctx.lineTo(35, shoulderY + 30);
+          ctx.stroke();
+
+          // Chân bước
+          const step = Math.sin(this.t / STEP_FREQ) * 12;
+          const hipY = BODY_TOP + BODY_LEN;
+          ctx.beginPath();
+          ctx.moveTo(0, hipY);
+          ctx.lineTo(-18 + step, hipY + 30);
+          ctx.moveTo(0, hipY);
+          ctx.lineTo(18 - step, hipY + 30);
+          ctx.stroke();
+        }
+
+        ctx.restore();
+      }
+    }
+
+    const guy = new Stickman();
+
+    function loop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      guy.update();
+      guy.draw();
+      requestAnimationFrame(loop);
+    }
+    loop();
+  </script>
+</body>
+</html>
