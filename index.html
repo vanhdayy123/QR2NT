@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Vanh đẹp trai</title>
+  <title>NgThao xinh gai</title>
   <style>
     html, body {
       height: 100%;
@@ -82,19 +82,19 @@
   <!-- Nội dung chính, ẩn ban đầu -->
   <div id="main-content">
     <div class="donate-container">
-      <img src="qrvanh.jpg" alt="Donate QR trên">
-      <p>Hãy Donate cho HVA</p>
+      <img src="QRNthao.jpg" alt="Donate QR trên">
+      <p>Hãy Donate cho NgThao</p>
     </div>
 
     <div class="center-text" id="main-text"></div>
 
     <div class="donate-container">
-      <img src="qrvanh.jpg" alt="Donate QR dưới">
-      <p>Hãy Donate cho HVA</p>
+      <img src="QRNthao.jpg" alt="Donate QR dưới">
+      <p>Hãy Donate cho NgThao</p>
     </div>
   </div>
 
-  <!-- Canvas nền -->
+  <!-- nền -->
   <canvas id="stickmanCanvas"></canvas>
 
   <script>
@@ -132,12 +132,12 @@
     resizeCanvas();
     window.addEventListener("resize", resizeCanvas);
 
-    // --- Geometry constants (dễ chỉnh) ---
-    const HEAD_R = 40;        // bán kính đầu (40 -> đường kính 80)
-    const NECK_GAP = 10;      // khoảng giữa đáy đầu và điểm bắt đầu thân
-    const BODY_TOP = -NECK_GAP; // y của "cổ" / đầu trên của thân (relative)
-    const BODY_LEN = 90;      // chiều dài thân
-    const STEP_FREQ = 10;     // tần số bước
+    // --- Geometry constants ---
+    const HEAD_R = 40;        //  R: bán kính
+    const NECK_GAP = 10;
+    const BODY_TOP = -NECK_GAP;
+    const BODY_LEN = 90;
+    const STEP_FREQ = 10;
 
     class Stickman {
       constructor() {
@@ -145,12 +145,12 @@
         this.y = canvas.height * 0.5;
         this.vx = 2.2;
         this.vy = 1.8;
-        this.state = "walk"; // "walk" | "rest"
-        this.t = 0;          // đếm khung tổng
-        this.phase = 0;      // đếm trong state hiện tại
-        this.walkDur = this.rand(360, 720); // 6–12s @60fps
+        this.state = "walk";
+        this.t = 0;
+        this.phase = 0;
+        this.walkDur = this.rand(360, 720); // 6–12s
         this.restDur = this.rand(90, 150);  // 1.5–2.5s
-        this.restSide = Math.random() < 0.5 ? 1 : -1; // nằm trái/phải
+        this.restSide = Math.random() < 0.5 ? 1 : -1;
       }
 
       rand(a, b) { return Math.floor(a + Math.random()*(b - a)); }
@@ -164,12 +164,12 @@
           this.x += this.vx;
           this.y += this.vy;
 
-          // bật tường (chừa viền theo kích thước người)
+          // bật tường
           const padX = Math.max(60, HEAD_R + 20), padY = Math.max(120, HEAD_R + 40);
           if (this.x < padX || this.x > canvas.width - padX) this.vx *= -1;
           if (this.y < padY || this.y > canvas.height - padY) this.vy *= -1;
 
-          // hết thời gian đi -> nghỉ
+          // nghỉ
           if (this.phase >= this.walkDur) {
             this.state = "rest";
             this.phase = 0;
@@ -177,18 +177,18 @@
             this.restSide = Math.random() < 0.5 ? 1 : -1;
           }
         } else if (this.state === "rest") {
-          // KHÔNG di chuyển khi nghỉ
+          // ko di chuyển khi nghỉ
           if (this.phase >= this.restDur) {
             this.state = "walk";
             this.phase = 0;
             this.walkDur = this.rand(360, 720);
 
-            // thêm chút đổi hướng ngẫu nhiên để tự nhiên hơn
+            // hướng random
             const jitter = 0.4;
             this.vx += (Math.random()*2 - 1) * jitter;
             this.vy += (Math.random()*2 - 1) * jitter;
 
-            // giới hạn tốc độ
+            // speed limitlimit
             const speed = Math.hypot(this.vx, this.vy);
             const maxS = 3.2, minS = 1.2;
             if (speed > maxS) {
@@ -208,11 +208,10 @@
         ctx.translate(this.x, this.y);
 
         if (this.state === "rest") {
-          // Vẽ tư thế nằm ngang đầy đủ (đầu-thân-tay-chân)
-          // xoay 90 độ trái/phải
+          // nằm ngang 
           ctx.rotate(this.restSide * Math.PI / 2);
 
-          // HEAD CENTER Y dựa trên BODY_TOP & HEAD_R
+          // HEAD CENTER Y / BODY_TOP & HEAD_R
           const headCenterY = BODY_TOP - HEAD_R;
 
           // Đầu
@@ -222,13 +221,13 @@
           ctx.fill();
           ctx.stroke();
 
-          // Thân (từ cổ BODY_TOP xuống BODY_TOP + BODY_LEN)
+          // Thân
           ctx.beginPath();
           ctx.moveTo(0, BODY_TOP);
           ctx.lineTo(0, BODY_TOP + BODY_LEN);
           ctx.stroke();
 
-          // Tay (dang thoải mái)
+          // Tay
           ctx.beginPath();
           ctx.moveTo(0, BODY_TOP + 15);
           ctx.lineTo(35, BODY_TOP + 45);
@@ -236,7 +235,7 @@
           ctx.lineTo(-35, BODY_TOP + 45);
           ctx.stroke();
 
-          // Chân (hơi co duỗi)
+          // Chân
           ctx.beginPath();
           ctx.moveTo(0, BODY_TOP + BODY_LEN);
           ctx.lineTo(28, BODY_TOP + BODY_LEN + 40);
@@ -245,8 +244,8 @@
           ctx.stroke();
 
         } else {
-          // Vẽ tư thế đi bộ (đứng)
-          const headCenterY = BODY_TOP - HEAD_R; // luôn cùng công thức
+          // ĐứngĐứng
+          const headCenterY = BODY_TOP - HEAD_R;
 
           // Đầu
           ctx.beginPath();
@@ -261,7 +260,7 @@
           ctx.lineTo(0, BODY_TOP + BODY_LEN);
           ctx.stroke();
 
-          // Vai / tay (từ vai)
+          // Vai
           const shoulderY = BODY_TOP + 20;
           ctx.beginPath();
           ctx.moveTo(0, shoulderY);
@@ -270,7 +269,7 @@
           ctx.lineTo(35, shoulderY + 30);
           ctx.stroke();
 
-          // Chân bước
+          // Chân
           const step = Math.sin(this.t / STEP_FREQ) * 12;
           const hipY = BODY_TOP + BODY_LEN;
           ctx.beginPath();
