@@ -8,7 +8,7 @@
     html, body {
       height: 100%;
       margin: 0;
-      overflow: hidden; /* tránh scrollbar */
+      overflow: hidden;
     }
     body {
       display: flex;
@@ -42,7 +42,7 @@
       color: #333;
     }
     #main-content {
-      display: none; /* Ẩn nội dung trước khi nhập tên */
+      display: none;
       position: relative;
       z-index: 1;
     }
@@ -55,7 +55,6 @@
       font-size: 16px;
       margin: 5px;
     }
-    /* Canvas vẽ stickman ở dưới mọi nội dung */
     #stickmanCanvas {
       position: fixed;
       inset: 0;
@@ -79,7 +78,6 @@
     <button onclick="showContent()">Gửi</button>
   </div>
 
-  <!-- Nội dung chính, ẩn ban đầu -->
   <div id="main-content">
     <div class="donate-container">
       <img src="QRNthao.jpg" alt="Donate QR trên">
@@ -94,10 +92,13 @@
     </div>
   </div>
 
-  <!-- nền -->
   <canvas id="stickmanCanvas"></canvas>
 
   <script>
+    // Load ảnh đầu cố định
+    const headImg = new Image();
+    headImg.src = "https://i.pinimg.com/736x/b5/f8/b0/b5f8b0f4a731485ada5ae5216c128103.jpg";
+
     function showContent() {
       const name = document.getElementById('username').value.trim();
       const gender = document.getElementById('gender').value;
@@ -132,8 +133,7 @@
     resizeCanvas();
     window.addEventListener("resize", resizeCanvas);
 
-    // --- Geometry constants ---
-    const HEAD_R = 40;        //  R: bán kính
+    const HEAD_R = 40;
     const NECK_GAP = 10;
     const BODY_TOP = -NECK_GAP;
     const BODY_LEN = 90;
@@ -148,8 +148,8 @@
         this.state = "walk";
         this.t = 0;
         this.phase = 0;
-        this.walkDur = this.rand(360, 720); // 6–12s
-        this.restDur = this.rand(90, 150);  // 1.5–2.5s
+        this.walkDur = this.rand(360, 720);
+        this.restDur = this.rand(90, 150);
         this.restSide = Math.random() < 0.5 ? 1 : -1;
       }
 
@@ -160,16 +160,13 @@
         this.phase++;
 
         if (this.state === "walk") {
-          // di chuyển
           this.x += this.vx;
           this.y += this.vy;
 
-          // bật tường
           const padX = Math.max(60, HEAD_R + 20), padY = Math.max(120, HEAD_R + 40);
           if (this.x < padX || this.x > canvas.width - padX) this.vx *= -1;
           if (this.y < padY || this.y > canvas.height - padY) this.vy *= -1;
 
-          // nghỉ
           if (this.phase >= this.walkDur) {
             this.state = "rest";
             this.phase = 0;
@@ -177,18 +174,15 @@
             this.restSide = Math.random() < 0.5 ? 1 : -1;
           }
         } else if (this.state === "rest") {
-          // ko di chuyển khi nghỉ
           if (this.phase >= this.restDur) {
             this.state = "walk";
             this.phase = 0;
             this.walkDur = this.rand(360, 720);
 
-            // hướng random
             const jitter = 0.4;
             this.vx += (Math.random()*2 - 1) * jitter;
             this.vy += (Math.random()*2 - 1) * jitter;
 
-            // speed limitlimit
             const speed = Math.hypot(this.vx, this.vy);
             const maxS = 3.2, minS = 1.2;
             if (speed > maxS) {
@@ -208,18 +202,11 @@
         ctx.translate(this.x, this.y);
 
         if (this.state === "rest") {
-          // nằm ngang 
-          ctx.rotate(this.restSide * Math.PI / 2);
+          ctx.rotate(this.restSide * Math.PI / 2); // xoay toàn thân
 
-          // HEAD CENTER Y / BODY_TOP & HEAD_R
+          // Vẽ ảnh đầu theo rotation
           const headCenterY = BODY_TOP - HEAD_R;
-
-          // Đầu
-          ctx.beginPath();
-          ctx.arc(0, headCenterY, HEAD_R, 0, Math.PI*2);
-          ctx.fillStyle = "#FFE8A3";
-          ctx.fill();
-          ctx.stroke();
+          ctx.drawImage(headImg, -HEAD_R, headCenterY - HEAD_R, HEAD_R*2, HEAD_R*2);
 
           // Thân
           ctx.beginPath();
@@ -242,17 +229,10 @@
           ctx.moveTo(0, BODY_TOP + BODY_LEN);
           ctx.lineTo(-28, BODY_TOP + BODY_LEN + 40);
           ctx.stroke();
-
         } else {
-          // ĐứngĐứng
+          // Vẽ ảnh đầu bình thường
           const headCenterY = BODY_TOP - HEAD_R;
-
-          // Đầu
-          ctx.beginPath();
-          ctx.arc(0, headCenterY, HEAD_R, 0, Math.PI*2);
-          ctx.fillStyle = "#CDEAFE";
-          ctx.fill();
-          ctx.stroke();
+          ctx.drawImage(headImg, -HEAD_R, headCenterY - HEAD_R, HEAD_R*2, HEAD_R*2);
 
           // Thân
           ctx.beginPath();
@@ -286,13 +266,17 @@
 
     const guy = new Stickman();
 
+    // Chỉ bắt đầu loop khi ảnh load xong
+    headImg.onload = () => {
+        loop();
+    };
+
     function loop() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       guy.update();
       guy.draw();
       requestAnimationFrame(loop);
     }
-    loop();
   </script>
 </body>
 </html>
